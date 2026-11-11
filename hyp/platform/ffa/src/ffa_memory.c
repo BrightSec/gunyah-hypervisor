@@ -241,8 +241,8 @@ ffa_memory_get_memory_region_desc(
 		 l_composite_mrd->range_count);
 	// For fragmented transfers, constituent_mrd_end may exceed buffer size.
 	if (constituent_mrd_end > buffer_size) {
-		assert(((constituent_mrd_end - buffer_size) %
-			sizeof(ffa_constituent_memory_region_desc_t)) == 0U);
+		// A partial trailing descriptor is ignored: the count below
+		// is rounded down to whole descriptors within the buffer.
 
 		constituent_mrd_end = buffer_size;
 	}
@@ -270,7 +270,7 @@ ffa_memory_get_all_descs(void *buffer, size_t buffer_size,
 {
 	bool ret;
 
-	assert((buffer != NULL) && (buffer_size != 0U));
+	assert(buffer != NULL);
 	assert(mtd != NULL);
 	assert((mad != NULL) && (mad_count != NULL));
 	assert((composite_mrd != NULL) && (constituent_mrd != NULL) &&
@@ -279,7 +279,7 @@ ffa_memory_get_all_descs(void *buffer, size_t buffer_size,
 	ffa_memory_transaction_desc_t *l_mtd;
 	ffa_memory_access_desc_t      *l_mad;
 
-	if (!util_is_baligned(buffer_size, 16U)) {
+	if ((buffer_size == 0U) || !util_is_baligned(buffer_size, 16U)) {
 		ret = false;
 		goto out;
 	}
@@ -308,8 +308,8 @@ ffa_memory_get_all_descs(void *buffer, size_t buffer_size,
 		goto out;
 	}
 
-	uint32_t mad_array_end =
-		l_mtd->mad_array_offset + (l_mtd->mad_size * l_mtd->mad_count);
+	size_t mad_array_end = (size_t)l_mtd->mad_array_offset +
+			       ((size_t)l_mtd->mad_size * l_mtd->mad_count);
 	if ((l_mtd->mad_array_offset < sizeof(ffa_memory_transaction_desc_t)) ||
 	    (mad_array_end > buffer_size)) {
 		ret = false;
