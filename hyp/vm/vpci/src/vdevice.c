@@ -642,7 +642,7 @@ vpci_config_write(vpci_function_t *function, size_t offset, size_t access_size,
 			accessed_size = size_r.r;
 		}
 
-		assert(remaining_size <= accessed_size);
+		assert(accessed_size <= remaining_size);
 
 		remaining_size -= accessed_size;
 		reg_offset += accessed_size;

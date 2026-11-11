@@ -25,15 +25,15 @@ virtio_virtq_read_desc_chain(virtio_iommu_t *virtio_iommu, index_t qnum,
 	virtio_iommu_queue_t *q		     = &virtio_iommu->queues[qnum];
 	index_t		      desc_entry_idx = first_desc_idx;
 	bool		      found_writable = false;
-
-	bool do_next = true;
-	while (do_next && (ret.count < util_array_size(ret.entries))) {
+	count_t		      visited	     = 0U;
+	bool		      do_next	     = true;
+	while (do_next && (ret.count < util_array_size(ret.entries)) &&
+	       (visited++ < q->size)) {
 		if (desc_entry_idx >= q->size) {
 			TRACE(DEBUG, INFO, "virtq: idx {:d} >= size {:d}",
 			      desc_entry_idx, q->size);
 			break;
 		}
-
 		virtio_virtq_desc_t *desc_entry = &ret.entries[ret.count];
 		error_t		     err = useraccess_copy_from_guest_ipa(
 					   virtio_iommu->viommu.addrspace,
